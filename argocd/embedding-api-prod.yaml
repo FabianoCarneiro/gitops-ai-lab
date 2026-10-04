@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: embedding-api-prod
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/SEU_USUARIO/gitops-ai-lab.git   # <- troque pelo seu fork
+    targetRevision: main
+    path: apps/embedding-api/overlays/prod
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: embedding-api-prod
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

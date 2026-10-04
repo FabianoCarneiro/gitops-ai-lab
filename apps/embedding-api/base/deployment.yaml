@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: embedding-api
+  labels:
+    app: embedding-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: embedding-api
+  template:
+    metadata:
+      labels:
+        app: embedding-api
+    spec:
+      containers:
+        - name: embedding-api
+          # Tag fixa (nunca :latest). Imagem carregada no kind com: kind load docker-image
+          image: embedding-api:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          envFrom:
+            # nome com hash gerado pelo configMapGenerator: mudou o conteúdo -> novo nome -> rollout
+            - configMapRef:
+                name: embedding-api-config
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 128Mi
