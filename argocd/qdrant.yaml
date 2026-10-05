@@ -11,7 +11,7 @@ spec:
   source:
     repoURL: https://qdrant.github.io/qdrant-helm
     chart: qdrant
-    targetRevision: "1.*"        # troque por uma versão exata (ex.: 1.x.y) — pin explícito
+    targetRevision: "1.19.1"        # troque por uma versão exata (ex.: 1.x.y) — pin explícito
     helm:
       releaseName: qdrant
       valuesObject:
