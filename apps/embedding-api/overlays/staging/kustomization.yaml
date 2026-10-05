@@ -9,4 +9,4 @@ configMapGenerator:
     literals:
       - ENVIRONMENT=staging
       - COLLECTION_PREFIX=docs-staging
-      - MODEL_VERSION=v2
+      - MODEL_VERSION=v1
