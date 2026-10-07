@@ -17,6 +17,7 @@ operar tudo por commits no Git: mudar a versão do modelo, detectar drift e faze
 app/                         # código do serviço (somente stdlib) + Dockerfile
 apps/embedding-api/base      # Deployment, Service, ConfigMap (configMapGenerator)
 apps/embedding-api/overlays  # staging e prod (Kustomize)
+apps/qdrant/values.yaml      # values do Helm chart do Qdrant (versionados aqui)
 argocd/                      # Applications: qdrant, embedding-api-staging, embedding-api-prod
 ```
 
@@ -32,7 +33,7 @@ Docker, kubectl, [kind](https://kind.sigs.k8s.io/), git e uma conta no GitHub. (
 ## Etapa 0 — Fork
 
 1. Faça fork deste repositório e clone o seu fork.
-2. Troque `SEU_USUARIO` por seu usuário nos arquivos `argocd/embedding-api-*.yaml`; commit e push.
+2. Troque `SEU_USUARIO` por seu usuário nos três arquivos de `argocd/` (`qdrant.yaml`, `embedding-api-staging.yaml`, `embedding-api-prod.yaml`); commit e push.
 
 ## Etapa 1 — Cluster e Argo CD
 
@@ -52,7 +53,9 @@ kubectl apply -f argocd/qdrant.yaml
 kubectl -n qdrant get pods -w            # aguarde Running
 ```
 
-Na UI, o app `qdrant` fica `Synced / Healthy`. **Antes da aula**, fixe a versão do chart em
+Na UI, o app `qdrant` fica `Synced / Healthy`. O chart é o oficial, mas os *values* ficam em
+`apps/qdrant/values.yaml` no seu repositório (Application com duas fontes: chart + Git), então a
+configuração do banco vetorial também é GitOps. **Antes da aula**, fixe a versão do chart em
 `targetRevision` (`helm search repo qdrant/qdrant --versions`).
 
 ## Etapa 3 — Deploy da API de embeddings (staging)
@@ -76,9 +79,13 @@ curl -s "localhost:9000/search?q=fonte+da+verdade&k=2"
 ```bash
 kubectl -n embedding-api-staging scale deploy/embedding-api --replicas=5
 kubectl -n embedding-api-staging get pods              # 5 pods... por poucos segundos
+
+# o mesmo vale para o banco vetorial
+kubectl -n qdrant scale statefulset/qdrant --replicas=3
+kubectl -n qdrant get pods -w
 ```
 
-O app fica `OutOfSync` e, com `selfHeal: true`, volta para 1 réplica sozinho.
+Os apps ficam `OutOfSync` e, com `selfHeal: true`, voltam ao que está no Git (API: 1 réplica; Qdrant: 1 réplica).
 Experimente também editar o ConfigMap à mão (`kubectl edit`) e observe a reversão.
 **Discussão:** quando o self-heal atrapalha? (ajuste de emergência durante um incidente)
 
@@ -112,8 +119,24 @@ curl -s localhost:9000/info                 # collection: docs-staging-v1
 O rollback é um commit auditável e passa por revisão. Repare: a coleção `docs-staging-v2` **continua
 no Qdrant** — o Git reverte configuração, não dados.
 
+## Etapa 7 (opcional) — Mudar o banco vetorial via Git
+
+1. Em `apps/qdrant/values.yaml`, troque `memory: 512Mi` (em `limits`) por `1Gi`.
+2. `git commit -am "qdrant: mais memória" && git push`
+3. O Argo CD sincroniza e o StatefulSet reinicia o pod `qdrant-0`:
+
+```bash
+kubectl -n qdrant get pods -w
+kubectl -n qdrant get pod qdrant-0 -o jsonpath='{.spec.containers[0].resources.limits.memory}'; echo
+curl -s "localhost:9000/search?q=fonte+da+verdade&k=2"    # os vetores continuam lá
+```
+
+**Lição:** infraestrutura stateful também é declarativa. A configuração muda por commit e o dado
+sobrevive ao rollout porque vive no volume (PVC), não no Git.
+
 ## Desafio
 
+- Escale o Qdrant para 3 réplicas **via Git** (`replicaCount` + modo cluster do chart) e discuta o que muda para os dados.
 - Instale o **Argo Rollouts** e faça um *canary* da `MODEL_VERSION=v2` (10% → 50% → 100%).
 - Ou crie um **ApplicationSet** que gere `staging` e `prod` a partir de um único template.
 - Ou: mova o `QDRANT_URL` para um `Secret` com **Sealed Secrets** (chave de API de LLM = segredo).

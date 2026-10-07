@@ -1,5 +1,6 @@
-# Banco vetorial (Qdrant) instalado via Helm chart oficial, gerenciado pelo Argo CD.
-# ATENÇÃO: confirme/fixe a versão do chart antes da aula:
+# Banco vetorial (Qdrant): chart Helm oficial + values versionados NESTE repositório
+# (multi-source, Argo CD >= 2.6). Assim a configuração do Qdrant também é GitOps.
+# ATENÇÃO: fixe a versão do chart antes da aula:
 #   helm repo add qdrant https://qdrant.github.io/qdrant-helm && helm search repo qdrant/qdrant --versions | head
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -8,22 +9,17 @@ metadata:
   namespace: argocd
 spec:
   project: default
-  source:
-    repoURL: https://qdrant.github.io/qdrant-helm
-    chart: qdrant
-    targetRevision: "1.19.1"        # troque por uma versão exata (ex.: 1.x.y) — pin explícito
-    helm:
-      releaseName: qdrant
-      valuesObject:
-        replicaCount: 1
-        persistence:
-          size: 1Gi
-        resources:
-          requests:
-            cpu: 100m
-            memory: 256Mi
-          limits:
-            memory: 512Mi
+  sources:
+    - repoURL: https://qdrant.github.io/qdrant-helm
+      chart: qdrant
+      targetRevision: "1.*"        # troque por uma versão exata (ex.: 1.x.y) — pin explícito
+      helm:
+        releaseName: qdrant
+        valueFiles:
+          - $values/apps/qdrant/values.yaml
+    - repoURL: https://github.com/SEU_USUARIO/gitops-ai-lab.git   # <- troque pelo seu fork
+      targetRevision: main
+      ref: values
   destination:
     server: https://kubernetes.default.svc
     namespace: qdrant

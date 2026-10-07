@@ -1,0 +1,11 @@
+# Values do Helm chart do Qdrant — versionados no SEU repositório.
+# Mudou aqui + commit + push => o Argo CD aplica no cluster.
+replicaCount: 1
+persistence:
+  size: 1Gi
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    memory: 512Mi   # Etapa 7: troque para 1Gi via commit
