@@ -3,6 +3,9 @@ kind: Kustomization
 namespace: embedding-api-staging
 resources:
   - ../../base
+replicas:
+  - name: embedding-api
+    count: 10
 configMapGenerator:
   - name: embedding-api-config
     behavior: merge
