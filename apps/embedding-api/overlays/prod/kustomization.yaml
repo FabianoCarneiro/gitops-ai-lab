@@ -12,4 +12,4 @@ configMapGenerator:
     literals:
       - ENVIRONMENT=prod
       - COLLECTION_PREFIX=docs-prod
-      - MODEL_VERSION=v1
+      - MODEL_VERSION=v2
