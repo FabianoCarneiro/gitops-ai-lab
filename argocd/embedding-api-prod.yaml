@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/FabianoCarneiro/gitops-ai-lab.git   # <- troque pelo seu fork
+    repoURL: https://github.com/antoniotechio/gitops-ai-lab.git   # <- troque pelo seu fork
     targetRevision: main
     path: apps/embedding-api/overlays/prod
   destination:

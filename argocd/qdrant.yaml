@@ -17,7 +17,7 @@ spec:
         releaseName: qdrant
         valueFiles:
           - $values/apps/qdrant/values.yaml
-    - repoURL: https://github.com/SEU_USUARIO/gitops-ai-lab.git   # <- troque pelo seu fork
+    - repoURL: https://github.com/antoniotechio/gitops-ai-lab.git   # <- troque pelo seu fork
       targetRevision: main
       ref: values
   destination:
